@@ -1,6 +1,6 @@
 FROM ubuntu:16.04
 
-MAINTAINER Ivan Font <ifont@redhat.com>
+MAINTAINER Aaron Rueth <arueth@mirantis.com>
 
 # Update and install packages
 # Mongo

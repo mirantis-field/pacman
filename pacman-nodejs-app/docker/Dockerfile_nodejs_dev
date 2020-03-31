@@ -1,6 +1,6 @@
 FROM node:boron
 
-MAINTAINER Ivan Font <ifont@redhat.com>
+MAINTAINER Aaron Rueth <arueth@mirantis.com>
 
 # Create app directory and specify volume that will be bind mounted at runtime
 RUN mkdir -p /usr/src/app

@@ -32,8 +32,8 @@ PHP FPM is used for the PHP API to receive read and write requests from clients 
 Clone this repo which contains the Kubernetes configs and Dockerfile resources.
 
 ```
-git clone https://github.com/font/k8s-example-apps.git
-cd k8s-example-apps/pacman-nginx-app
+git clone https://github.com/mirantis-field/pacman.git
+cd pacman/pacman-nginx-app
 ```
 
 ## Create Application Container Image
@@ -49,60 +49,45 @@ The [Dockerfile](docker/Dockerfile) performs the following steps:
 
 To build the image run:
 
-```
+```text
+export DTR_FQDN=dtr.demo.mirantis.com
+export DTR_ORGANIZATION=launch-party
+
 cd docker
-docker build -t <user>/pacman-nginx-app .
+docker build -t ${DTR_FQDN}/${DTR_ORGANIZATION}/pacman-nginx-app:latest .
 cd ..
 ```
 
 You can test the image by running:
 
-```
-docker run -p 8000:80 <user>/pacman-nginx-app
+```text
+docker run -p 8000:80 ${DTR_FQDN}/${DTR_ORGANIZATION}/pacman-nginx-app:latest
 ```
 
 And going to `http://localhost:8000/` to see if you get the Pacman game.
 
-## Kubernetes Components
+## Container Registry
 
-### Install Google Cloud SDK
-
-To test on a Kubernetes cluster, make sure you have the [Google Cloud SDK installed](https://cloud.google.com/sdk/). You can quickly do this
-on Linux/Mac with:
-
-```
-curl https://sdk.cloud.google.com | bash
-```
-
-Once installed, log in and update it:
-
-```
-gcloud auth login
-gcloud components update
-```
-
-### Create a Google Cloud Project
-
-You can either create a new project or use an existing one. See the
-[Google Cloud Docs](https://cloud.google.com/resource-manager/docs/creating-managing-projects) for more details.
-
-### Push container to Google Cloud Container Registry
+### Push image to Docker Trusted Registry
 
 You'll want to tag your previously created Docker image to use the Google Cloud Container Registry URL and then push it:
 
-```
-docker tag <user>/pacman-nginx-app gcr.io/YOUR_PROJECT_ID/pacman-nginx-app
-gcloud docker push gcr.io/YOUR_PROJECT_ID/pacman-nginx-app
+```text
+docker login ${DTR_FQDN}
+docker push ${DTR_FQDN}/${DTR_ORGANIZATION}/pacman-nginx-app
 ```
 
 Once you've pushed your image, you'll need to update the Kubernetes resources to point to your image before you continue
 with the rest of the guides.
 
-```
-sed -i 's/ifontlabs/YOUR_PROJECT_ID/' controllers/web-controller.yaml replicasets/pacman-replicaset.yaml
+## Kubernetes
+
+```text
+sed -i 's/dtr.demo.mirantis.com/${DTR_FQDN}/' controllers/web-controller.yaml replicasets/pacman-replicaset.yaml
+sed -i 's/launch-party/${DTR_ORGANIZATION}/' controllers/web-controller.yaml replicasets/pacman-replicaset.yaml
 ```
 
-## Set Up Kubernetes Cluster(s)
+### Use-Cases
 
 You'll need to create 1 or at least 3 Kubernetes cluster(s) depending on whether you want to try out the Pac-Man app on 1 cluster,
 or try it out on a federated cluster. Below are links to the two choices that will guide you through it:

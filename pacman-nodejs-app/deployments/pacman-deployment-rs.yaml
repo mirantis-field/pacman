@@ -12,11 +12,11 @@ spec:
         name: pacman
     spec:
       containers:
-      - image: quay.io/ifont/pacman-nodejs-app:latest
-        name: pacman
-        env:
-        - name: MONGO_REPLICA_SET
-          value: rs0
-        ports:
-        - containerPort: 8080
-          name: http-server
+        - image: dtr.demo.mirantis.com/launch-party/pacman-nodejs:latest
+          name: pacman
+          env:
+            - name: MONGO_REPLICA_SET
+              value: rs0
+          ports:
+            - containerPort: 8080
+              name: http-server

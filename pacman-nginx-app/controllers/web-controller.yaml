@@ -14,8 +14,8 @@ spec:
         name: web
     spec:
       containers:
-      - image: gcr.io/ifontlabs/pacman-nginx-app:latest
-        name: web
-        ports:
-        - containerPort: 80
-          name: http-server
+        - image: dtr.demo.mirantis.com/launch-party/pacman-nginx-app:latest
+          name: web
+          ports:
+            - containerPort: 80
+              name: http-server

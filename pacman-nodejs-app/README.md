@@ -8,7 +8,7 @@ and write data to a MongoDB database.
 ### Pac-Man
 
 The Pac-Man game is a modified version of the open source Pac-Man game written in HTML5 with Javascript. You can get the
-modified [Pac-Man game source code here](https://github.com/font/pacman.git).
+modified [Pac-Man game source code here](https://github.com/mirantis/pacman-nodejs.git).
 
 ### Node.js
 
@@ -26,12 +26,12 @@ for the backend Node.js API.
 
 Clone this repo which contains the Kubernetes configs and Dockerfile resources.
 
-```
-git clone https://github.com/font/k8s-example-apps.git
-cd k8s-example-apps/pacman-nodejs-app
+```bash
+git clone https://github.com/mirantis-field/pacman.git
+cd pacman/pacman-nodejs-app
 ```
 
-### Create Application Container Image
+## Create Application Container Image
 
 The [Dockerfile](docker/Dockerfile) performs the following steps:
 
@@ -42,73 +42,54 @@ The [Dockerfile](docker/Dockerfile) performs the following steps:
 
 To build the image run:
 
-```
+```bash
+export DTR_FQDN=dtr.demo.mirantis.com
+export DTR_ORGANIZATION=launch-party
+
 cd docker
-docker build -t <user>/pacman-nodejs-app .
+docker build -t ${DTR_FQDN}/${DTR_ORGANIZATION}/pacman-nodejs:latest .
 cd ..
 ```
 
 You can test the image by running:
 
-```
-docker run -p 8000:8080 <user>/pacman-nodejs-app
+```bash
+docker run -it --rm -p 8000:8080 ${DTR_FQDN}/${DTR_ORGANIZATION}/pacman-nodejs:latest
 ```
 
 And going to `http://localhost:8000/` to see if you get the Pac-Man game.
 
-### Container Registry
+## Container Registry
 
-#### Create a Quay Account
+### Push the Image to Docker Trusted Registry
 
-Create a [Quay](https://quay.io/) account which allows unlimited storage and serving of public
-repositories.
-
-#### Sign Into Your Quay Account
-
-Run the following `docker` command to sign in:
+You'll want to tag your previously created Docker image to use the URL and then push it:
 
 ```bash
-$ docker login quay.io
-Username: myusername
-Password: mypassword
-```
-
-#### Push Container Image to Quay
-
-You'll want to tag your previously created Docker image to use the  URL and then push it:
-
-```
-docker tag <user>/pacman-nodejs-app quay.io/YOUR_USERNAME/pacman-nodejs-app
-docker push quay.io/YOUR_USERNAME/pacman-nodejs-app
+docker login ${DTR_FQDN}
+docker push ${DTR_FQDN}/${DTR_ORGANIZATION}/pacman-nodejs
 ```
 
 Once you've pushed your image, you'll need to update the Kubernetes resources
 to point to your image before you continue with the rest of the guides.
 
+## Kubernetes
+
+```bash
+sed -i "s/dtr.demo.mirantis.com/${DTR_FQDN}/" deployments/pacman-deployment*.yaml
+sed -i "s/launch-party/${DTR_ORGANIZATION}/" deployments/pacman-deployment*.yaml
 ```
-sed -i 's/ifont/YOUR_USERNAME/' deployments/pacman-deployment*.yaml
-```
 
-#### Make Container Image Public
-
-Go the `settings` tab for your repository and modify the `Repository Visibilty`
-to make the repository public. To navigate directly there, replace `<username>`
-with your username:
-https://quay.io/repository/<username>/pacman-nodejs-app?tab=settings
-
-Afer pushing, make sure to make your repository public on `quay.io`.
-
-
-## Kubernetes Cluster Use-Cases
+### Use-Cases
 
 You'll need to create 1 to at least 3 Kubernetes cluster(s) depending on whether you want to try out the Pac-Man app on 1 cluster,
 or try it out on multiple clusters. Below are links that will guide you through it.
 
-### Single Kubernetes Cluster
+#### Single Kubernetes Cluster
 
 - [Pac-Man Node.js App Single Cluster](docs/pacman-nodejs-app-single-cluster.md)
 
-### Federated-v2 Kubernetes Cluster Use-Cases
+#### Federated-v2 Kubernetes Cluster Use-Cases
 
 Follow the instructions in the below links to test out different federation use-cases.
 
@@ -119,7 +100,7 @@ Follow the instructions in the below links to test out different federation use-
 - [Pac-Man application portability: deploy on GKE and Azure, then swap Azure
   with AWS](docs/pacman-nodejs-app-federated-gke-az-aws-portability.md)
 
-### Kubernetes Cluster Use-Cases (Without Federation)
+#### Kubernetes Cluster Use-Cases (Without Federation)
 
 - [Pac-Man application migration using GKE](docs/pacman-nodejs-app-gke-migration.md)
 - [Pac-Man application migration from AWS to GKE](docs/pacman-nodejs-app-aws-gke-migration.md)

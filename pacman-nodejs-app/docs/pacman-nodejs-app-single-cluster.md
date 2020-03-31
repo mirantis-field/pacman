@@ -2,122 +2,126 @@
 
 This guide will walk you through creating a single Kubernetes cluster and deploy the Pac-Man Node.js application onto it.
 
-## Create the Kubernetes cluster
+## Setup Environment Variables
 
-Using the command below we'll create a cluster:
-
-- Use the project ID you previously created
-- Cluster named **kube-ref-app**
-- Zone will be **us-central1-f** or use a zone closest to you
-- Machine type will be **n1-standard-2**
-- Size of 3 nodes
-
-```
-gcloud container --project "<YOUR_PROJECT_ID>" \
-  clusters create "kube-ref-app" --zone "us-central1-f" \
-  --machine-type "n1-standard-2" --num-nodes "3" --network "default"
+```bash
+export DKS_NAMESPACE=pacman
 ```
 
-Once the cluster has been created, you'll want to log into the cluster:
+### Source Your Client Bundle
 
-```
-gcloud container clusters \
-  --project "<YOUR_PROJECT_ID>" \
-  --zone "us-central1-f" \
-  get-credentials kube-ref-app
+```bash
+cd client-bundle
+source env.sh
 ```
 
 ## Create MongoDB Resources
 
-#### Create MongoDB Persistent Volume Claim
+### Ensure a Default StorageClass is Configured
+
+```bash
+kubectl get storageclass --namespace=${DKS_NAMESPACE}
+```
+
+### Create MongoDB Persistent Volume Claim
 
 We need to create persistent volume claim for our MongoDB to persist the database.
 
-```
-kubectl create -f persistentvolumeclaim/mongo-pvc.yaml
+```bash
+kubectl create --filename=persistentvolumeclaim/mongo-pvc.yaml --namespace=${DKS_NAMESPACE}
 ```
 
 Wait until the pvc is bound:
 
-```
-kubectl get pvc mongo-storage -o wide --watch
-```
-
-#### Create MongoDB Service
-
-This component creates a mongo DNS entry, so this is why we use `mongo` as the host we connect to in our application instead of `localhost`.
-
-```
-kubectl create -f services/mongo-service.yaml
+```bash
+kubectl get persistentvolumeclaims mongo-storage --namespace=${DKS_NAMESPACE} --output=wide --watch
 ```
 
-Wait until the mongo service has the external IP address listed:
+### Create MongoDB Deployment
 
-```
-kubectl get svc mongo -o wide --watch
-```
+Now create the MongoDB deployment that will use the `mongo-storage` persistent volume claim to mount the directory that is to contain the MongoDB database files.
 
-#### Create MongoDB Deployment
-
-Now create the  MongoDB deployment that will use the `mongo-storage` persistent volume claim to mount the directory that is to contain the MongoDB database files.
-
-```
-kubectl create -f deployments/mongo-deployment.yaml
+```bash
+kubectl create --filename=deployments/mongo-deployment.yaml --namespace=${DKS_NAMESPACE}
 ```
 
 Scale the deployment, since the deployment definition has replicas set to 0:
 
-```
-kubectl scale deploy/mongo --replicas=1
+```bash
+kubectl scale deployment mongo --namespace=${DKS_NAMESPACE} --replicas=1
 ```
 
 Verify the container has been created and is in the running state:
 
+```bash
+kubectl get pods --namespace=${DKS_NAMESPACE} --output=wide --watch
 ```
-kubectl get pods -o wide --watch
+
+### Create MongoDB Service
+
+This component creates a mongo DNS entry, so this is why we use `mongo` as the host we connect to in our application instead of `localhost`.
+
+```bash
+kubectl create --filename=services/mongo-service.yaml --namespace=${DKS_NAMESPACE}
+```
+
+Wait until the mongo service has the external IP address listed:
+
+```bash
+kubectl get service mongo --namespace=${DKS_NAMESPACE} --output=wide --watch
 ```
 
 ## Creating the Pac-Man Resources
 
-#### Create Pac-Man Service
-
-This component creates the service to access the application.
-
-```
-kubectl create -f services/pacman-service.yaml
-```
-
-Wait until the pacman service has the external IP address listed:
-
-```
-kubectl get svc pacman -o wide --watch
-```
-
-#### Create Pac-Man Deployment
+### Create Pac-Man Deployment
 
 Now create the Pac-Man deployment.
 
+```bash
+kubectl create --filename=deployments/pacman-deployment.yaml --namespace=${DKS_NAMESPACE}
 ```
-kubectl create -f deployments/pacman-deployment.yaml
+
+Let's describe the Pac-Man deployment.
+
+```bash
+kubectl describe deployment pacman --namespace=${DKS_NAMESPACE}
 ```
 
 Scale the deployment, since the deployment definition has replicas set to 0.
 
-```
-kubectl scale deploy/pacman --replicas=2
+```bash
+kubectl scale deployment pacman --namespace=${DKS_NAMESPACE} --replicas=2
 ```
 
 Verify the containers have been created and are in the running state:
 
+```bash
+kubectl describe deployment pacman --namespace=${DKS_NAMESPACE}
 ```
-kubectl get pods -o wide --watch
+
+```bash
+kubectl get pods --namespace=${DKS_NAMESPACE} --output=wide --watch
+```
+
+### Create Pac-Man Service
+
+This component creates the service to access the application.
+
+```bash
+kubectl create --filename=services/pacman-service.yaml --namespace=${DKS_NAMESPACE}
+```
+
+Wait until the pacman service has the external IP address listed:
+
+```bash
+kubectl get service pacman --namespace=${DKS_NAMESPACE} --output=wide --watch
 ```
 
 Once the pacman pods are running and the `pacman` service has an IP address, open up your browser and try to access it via `http://<EXTERNAL_IP>/`.
 
 ## Cleanup
 
-#### Delete Kubernetes cluster
+### Delete Kubernetes cluster
 
 Delete the GKE cluster.
 
